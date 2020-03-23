@@ -1,0 +1,69 @@
+# The token from your Buildkite "Agents" page
+token="{{ buildkite_token }}"
+
+# The name of the agent
+name="%hostname-%n"
+
+# The priority of the agent (higher priorities are assigned work first)
+priority="{{ builkite_agent_priority }}"
+
+# Tags for the agent (default is "queue=default")
+# tags="key1=val2,key2=val2"
+tags="queue={{ buildkite_queue_name }}"
+
+# Include the host's EC2 meta-data as tags (instance-id, instance-type, and ami-id)
+# tags-from-ec2=true
+
+# Include the host's EC2 tags as tags
+tags-from-ec2-tags="{{ buildkite_tags_from_ec2_tags }}"
+
+# Include the host's Google Cloud instance meta-data as tags (instance-id, machine-type, preemptible, project-id, region, and zone)
+# tags-from-gcp=true
+
+# Include the host's Google Cloud instance labels as tags
+# tags-from-gcp-labels=true
+
+# Path to a custom bootstrap command to run. By default this is `buildkite-agent bootstrap`.
+# This allows you to override the entire execution of a job. Generally you should use hooks instead!
+# See https://buildkite.com/docs/agent/hooks
+# bootstrap-script=""
+
+# Path to where the builds will run from
+build-path="/var/lib/buildkite-agent/builds"
+
+# Directory where the hook scripts are found
+hooks-path="/etc/buildkite-agent/hooks"
+
+# When plugins are installed they will be saved to this path
+plugins-path="/etc/buildkite-agent/plugins"
+
+# Flags to pass to the `git clone` command
+# git-clone-flags=-v
+
+# Flags to pass to the `git clean` command
+# git-clean-flags=-ffxdq
+
+# Do not run jobs within a pseudo terminal
+# no-pty=true
+
+# Don't automatically verify SSH fingerprints
+# no-automatic-ssh-fingerprint-verification=true
+
+# Don't allow this agent to run arbitrary console commands
+# no-command-eval=true
+
+# Don't allow this agent to run plugins
+# no-plugins=true
+
+# Enable debug mode
+# debug=true
+
+# Don't show colors in logging
+# no-color=true
+
+#  Disconnect after processing a single job 
+disconnect-after-job="{{ buildkite_disconnect_after_job }}"
+disconnect-after-job-timeout="{{ buildkite_disconnect_after_job_timeout }}"
+
+# Prepend timestamps on each line of output
+timestamp-lines="{{ builkite_timestamp_lines }}"

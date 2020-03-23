@@ -1,0 +1,164 @@
+---
+# tasks file for buildkite-agent
+
+- name: Add buildkite apt key
+  apt_key:
+   keyserver: keyserver.ubuntu.com
+   id: "{{ buildkite_key_id }}"
+
+- name: install - add buildkite repo
+  apt_repository:
+   repo: "{{ buildkite_repository_url }}"
+   state: present
+   update_cache: true
+
+- name: install buildkite agent
+  apt:
+   name: buildkite-agent
+   state: present
+   update_cache: yes
+
+- name: install buildkite-agent.cfg.j2
+  template:
+   src: "buildkite-agent.cfg.j2"
+   dest: /etc/buildkite-agent/buildkite-agent.cfg
+   mode: "0640"
+
+- name: copy hooks
+  copy:
+   src: "{{ buildkite_hooks_dir }}/"
+   dest: /etc/buildkite-agent/hooks/
+   owner: "{{ buildkite_user }}"
+   group: "{{ buildkite_group }}"
+   mode: 0755
+
+- name: set buildkite-agent home
+  user:
+   name: "{{ buildkite_user }}"
+   home: "{{ buildkite_home }}"
+
+- name: create .ssh dir
+  file:
+   path: "{{ buildkite_home }}/.ssh"
+   state: directory
+   owner: "{{ buildkite_user }}"
+   group: "{{ buildkite_group }}"
+   mode: 0700
+
+- name: copy deploy keys
+  copy:
+   src: "{{ buildkite_key_rsa }}"
+   dest: "{{ buildkite_home }}/.ssh/id_rsa"
+   owner: "{{ buildkite_user }}"
+   group: "{{ buildkite_group }}"
+   mode: 0600
+
+- name: copy deploy ssh config
+  copy:
+   src: ssh_config
+   dest: "{{ buildkite_home }}/.ssh/config"
+   owner: "{{ buildkite_user }}"
+   group: "{{ buildkite_group }}"
+   mode: 0600
+
+- name: create .aws dir
+  file:
+   path: "{{ buildkite_home }}/.aws"
+   state: directory
+   owner: "{{ buildkite_user }}"
+   group: "{{ buildkite_group }}"
+   mode: 0700
+
+- name: copy .aws/credentials
+  template:
+   src: aws_credentials.j2
+   dest: "{{ buildkite_home }}/.aws/credentials"
+   owner: "{{ buildkite_user }}"
+   group: "{{ buildkite_group }}"
+   mode: 0600
+
+- name: copy .aws/config
+  template:
+   src: aws_config.j2
+   dest: "{{ buildkite_home }}/.aws/config"
+   owner: "{{ buildkite_user }}"
+   group: "{{ buildkite_group }}"
+   mode: 0600
+
+- name: copy fix-buildkite-agent-builds-permissions
+  copy:
+   src: fix-buildkite-agent-builds-permissions
+   dest: /usr/local/bin/fix-buildkite-agent-builds-permissions
+   owner: "{{ buildkite_user }}"
+   group: "{{ buildkite_group }}"
+   mode: 0755
+
+- name: copy sudoers.d/91-buildkite file
+  copy:
+   src: 91-buildkite
+   dest: /etc/sudoers.d/91-buildkite
+   owner: root
+   group: root
+   mode: 0440
+
+- name: copy buildkite-agent systemd
+  copy:
+   src: /usr/share/buildkite-agent/systemd/buildkite-agent.service
+   dest: /etc/systemd/system/buildkite-agent.service
+   remote_src: yes
+  when: buildkite_system_default|bool
+
+- name: copy buildkite-agent systemd
+  copy:
+   src: "{{ role_path }}/files/buildkite-agent.service-terminate"
+   dest: /etc/systemd/system/buildkite-agent.service
+   owner: root
+   group: root
+  when: buildkite_system_dynamic_autoscale|bool
+
+- name: copy buildkite-agent terminate-instance for dynamic autoscaling
+  copy:
+   src: "{{ role_path }}/files/terminate-instance"
+   dest: /usr/local/bin/terminate-instance
+   owner: root
+   group: root
+   mode: 0755
+  when: buildkite_system_dynamic_autoscale|bool
+
+- name: copy buildkite-agent systemd template
+  copy:
+   src: /usr/share/buildkite-agent/systemd/buildkite-agent.service
+   dest: /etc/systemd/system/buildkite-agent@.service
+   remote_src: yes
+
+- name: disable buildkite-agent
+  service:
+   name: buildkite-agent
+   enabled: no
+   state: stopped
+
+- name: create builds in data
+  file:
+   path: /data/builds
+   state: directory
+   owner: "{{ buildkite_user }}"
+   group: "{{ buildkite_group }}"
+   mode: 0755
+
+- name: symlink builds
+  file:
+   dest: "{{ buildkite_home }}/builds"
+   src: "/data/builds"
+   owner: "{{ buildkite_user }}"
+   group: "{{ buildkite_group }}"
+   state: link
+
+- debug:
+   msg: This has {{ ansible_processor_vcpus }} CPUs
+
+- name: create agents for each cpu
+  systemd:
+   name: buildkite-agent@{{ item }}
+   enabled: yes
+   state: started
+  with_sequence: count={{ buildkite_num_of_agents | default(ansible_processor_vcpus) }}

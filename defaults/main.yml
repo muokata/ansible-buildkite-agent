@@ -1,0 +1,28 @@
+---
+# defaults file for buildkite-agent
+
+buildkite_key_id: ""
+buildkite_repository_url: "deb https://apt.buildkite.com/buildkite-agent stable main"
+docker: true
+docker_symlink: true
+docker_compose: true
+docker_compose_version: "1.24.0"
+docker_compose_path: "/usr/local/bin/docker-compose"
+buildkite: true
+buildkite_token: "xxx"
+buildkite_user: 'buildkite-agent'
+buildkite_group: buildkite-agent
+buildkite_home: '/var/lib/buildkite-agent'
+buildkite_key_rsa: ""
+buildkite_hooks_dir: files/hooks
+buildkite_queue_name: default
+buildkite_disconnect_after_job: false
+buildkite_disconnect_after_job_timeout: false
+builkite_agent_priority: "1"
+builkite_timestamp_lines: false
+buildkite_tags_from_ec2_tags: true
+buildkite_agent_metrics_aws_region: us-west-2
+buildkite_aws_access_key_id: ''
+buildkite_aws_secret_access_key: ''
+buildkite_system_default: true
+buildkite_system_dynamic_autoscale: false

@@ -1,0 +1,78 @@
+---
+# tasks file for docker-ce
+
+- name: Ensure old versions of Docker are not installed.
+  package:
+    name:
+      - docker
+      - docker-engine
+    state: absent
+
+- name: Ensure dependencies are installed.
+  apt:
+    name:
+      - apt-transport-https
+      - ca-certificates
+    state: present
+
+- name: Add Docker GPG key
+  apt_key: url=https://download.docker.com/linux/ubuntu/gpg
+
+- name: Add Docker APT repository
+  apt_repository:
+    repo: deb [arch=amd64] https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable
+    state: present
+    update_cache: true
+
+- name: Install Docker
+  apt:
+    name: docker-ce
+    state: present
+    update_cache: true
+  notify: restart docker
+
+- name: Ansible check file exists example.
+  stat:
+    path: /var/lib/docker
+  register: dockerdir_exists
+
+- name: copy docker folder /data/
+  command: mv /var/lib/docker /data
+  when: dockerdir_exists.stat.exists
+
+- name:
+  file:
+    path: /data/docker
+    state: directory
+    mode: 0755
+    owner: root
+    group: root
+  when: dockerdir_exists.stat.exists == False
+
+- name: symlink /var/lib/docker
+  file:
+    dest: /var/lib/docker
+    src: /data/docker
+    owner: root
+    group: root
+    state: link
+  when: docker_symlink|bool
+
+- name: Ensure docker users are added to the docker group.
+  user:
+    name: buildkite-agent
+    groups: docker
+    append: true
+
+- name: start docker
+  service:
+    name: docker
+    enabled: true
+    state: started
+
+- name: docker prune cronjob
+  cron:
+    name: docker system prune
+    minute: "0"
+    hour: "*/3"
+    job: "/usr/bin/docker system prune -f > /dev/null"

@@ -1,0 +1,19 @@
+---
+- name: Prepare
+  hosts: all
+  gather_facts: false
+  tasks:
+    - name: Install python for Ansible
+      raw: test -e /usr/bin/python || (apt -y update && apt install -y python-minimal)
+      become: true
+      changed_when: false
+    - name: make sure systemd is installed
+      apt:
+        name: systemd
+        state: present
+      become: true
+    - name: make sure cron is installed
+      apt:
+        name: cron
+        state: present
+      become: true

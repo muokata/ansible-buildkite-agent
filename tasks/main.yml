@@ -1,0 +1,28 @@
+---
+# tasks file for buildkite-agent
+
+- name: make sure some packages are installed
+  apt:
+   name: "{{ packages }}"
+   state: present
+  vars:
+    packages:
+    - apt-transport-https
+    - awscli
+
+- name: create data folder
+  file:
+   path: /data
+   state: directory
+   mode: 0755
+   owner: root
+   group: root
+
+- include_tasks: docker.yml
+  when: docker|bool
+
+- include_tasks: docker-compose.yml
+  when: docker_compose|bool
+
+- include_tasks: buildkite.yml
+  when: buildkite|bool

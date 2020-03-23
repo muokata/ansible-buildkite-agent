@@ -1,0 +1,1 @@
+buildkite-agent ALL=NOPASSWD: /usr/local/bin/fix-buildkite-agent-builds-permissions

@@ -1,0 +1,12 @@
+---
+# handlers file for buildkite-agent
+
+- name: restart docker
+  service:
+    name: docker
+    state: restarted
+
+- name: restart buildkite-agent
+  service:
+    name: buildkite-agent
+    state: restarted

@@ -1,0 +1,10 @@
+---
+
+- debug:
+    msg: docker-compose-{{ ansible_system }}-{{ ansible_machine }}
+
+- name: Install Docker Compose (if configured).
+  get_url:
+    url: "https://github.com/docker/compose/releases/download/{{ docker_compose_version }}/docker-compose-{{ ansible_system }}-{{ ansible_machine }}"
+    dest: "{{ docker_compose_path }}"
+    mode: 0755
